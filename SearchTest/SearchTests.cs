@@ -1,7 +1,76 @@
-﻿// See https://aka.ms/new-console-template for more information
 using OnTheBeachSearch.Classes;
 
-string HotelJSON = @" [
+namespace SearchTest
+{
+    [TestClass]
+    public class SearchTests
+    {
+        [TestMethod]
+        public void TestCustomer1()
+        {
+            string FromStr = "MAN";
+            string ToStr = "AGP";
+            DateTime DepartureDate = DateTime.Parse("01/07/2023");
+            int Duration = 7;
+
+            int resultflightId = 2;
+            int resulthotelId = 9;
+
+            var newSearch = new HolidaySearch(FlightJSON, HotelJSON);
+            var result = newSearch.Search(FromStr, ToStr, DepartureDate, Duration).FirstOrDefault();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(result.Flight.Id, resultflightId);
+            Assert.AreEqual(result.Hotel.Id, resulthotelId);
+
+        }
+
+        [TestMethod]
+        public void TestCustomer2()
+        {
+            string FromStr = "LON"; // assuming any london airport
+            string ToStr = "PMI";
+            DateTime DepartureDate = DateTime.Parse("15/06/2023");
+            int Duration = 10;
+
+            int resultflightId = 6;
+            int resulthotelId = 5;
+
+            var newSearch = new HolidaySearch(FlightJSON, HotelJSON);
+            var result = newSearch.Search(FromStr, ToStr, DepartureDate, Duration).FirstOrDefault();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(result.Flight.Id, resultflightId);
+            Assert.AreEqual(result.Hotel.Id, resulthotelId);
+
+        }
+
+        [TestMethod]
+        public void TestCustomer3()
+        {
+            string FromStr = "ANY"; // assuming any airport
+            string ToStr = "LPA";
+            DateTime DepartureDate = DateTime.Parse("10/11/2022");
+            int Duration = 14;
+
+            int resultflightId = 7;
+            int resulthotelId = 6;
+
+            var newSearch = new HolidaySearch(FlightJSON, HotelJSON);
+            var result = newSearch.Search(FromStr, ToStr, DepartureDate, Duration).FirstOrDefault();
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(result.Flight.Id, resultflightId);
+            Assert.AreEqual(result.Hotel.Id, resulthotelId);
+
+        }
+
+
+
+
+        #region test data
+
+        string HotelJSON = @" [
  {
  ""id"": 1,
  ""name"": ""Iberostar Grand Portals Nous"",
@@ -107,7 +176,7 @@ string HotelJSON = @" [
  ""nights"": 10
  }
  ]";
-string FlightJSON = @" [
+        string FlightJSON = @" [
  {
  ""id"": 1,
  ""airline"": ""First Class Air"",
@@ -206,8 +275,6 @@ string FlightJSON = @" [
  }
  ]";
 
-
-
-var newSearch = new HolidaySearch(FlightJSON, HotelJSON);
-var packages = newSearch.Search("MAN", "AGP", DateTime.Parse("01/07/2023"), 7);
-
+        #endregion
+    }
+}

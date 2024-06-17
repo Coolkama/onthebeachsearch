@@ -13,17 +13,25 @@ namespace OnTheBeachSearch.Classes
         public List<Flight> Flights { get; set; }
         public List<Hotel> Hotels { get; set; }
 
-        public HolidaySearch(string flights, string hotels)
+        private string[] LondonAirports = ["LHR", "LGW", "LCY", "LTN", "STN"];
+
+        public HolidaySearch(string flightsJSON, string hotelsJSON)
         {
-            Flights = LoadFlights(flights);
-            Hotels = LoadHotels(hotels);
+            Flights = LoadFlights(flightsJSON);
+            Hotels = LoadHotels(hotelsJSON);
         }
 
         private List<Flight> LoadFlights(string json)
         {
             try
             {
-                return JsonConvert.DeserializeObject<List<Flight>>(json) ?? new List<Flight>();
+                var settings = new JsonSerializerSettings
+                {
+                    DateFormatString = "yyyy-MM-dd"
+                };
+
+                return JsonConvert.DeserializeObject<List<Flight>>(json, settings) ?? new List<Flight>();
+                
             }
             catch (Exception ex)
             {
@@ -36,7 +44,12 @@ namespace OnTheBeachSearch.Classes
         {
             try
             {
-                return JsonConvert.DeserializeObject<List<Hotel>>(json) ?? new List<Hotel>();
+                var settings = new JsonSerializerSettings
+                {
+                    DateFormatString = "yyyy-MM-dd"
+                };
+
+                return JsonConvert.DeserializeObject<List<Hotel>>(json,settings) ?? new List<Hotel>();
             }
             catch (Exception ex)
             {
@@ -45,20 +58,27 @@ namespace OnTheBeachSearch.Classes
             }
         }
 
-        public Package Search(string departingFrom, string travelingTo, DateTime departureDate, int duration)
+        public List<Package> Search(string departingFrom, string travelingTo, DateTime departureDate, int duration)
         {
-            var matchingFlights = Flights.Where(f => (f.From == departingFrom || departingFrom == "Any Airport") &&
+            var matchingFlights = Flights.Where(f => (f.From == departingFrom || departingFrom == "ANY" || (departingFrom == "LON" && LondonAirports.Contains(f.From))) &&
                                                              f.To == travelingTo &&
-                                                             f.DepartureDate == departureDate);
+                                                             f.DepartureDate.Date == departureDate.Date)
+                                         .ToList();
 
             var matchingHotels = Hotels.Where(h => h.LocalAirports.Contains(travelingTo) &&
-                                                   h.ArrivalDate == departureDate && h.Nights == duration);
-            var bestPackage = (from flight in matchingFlights
-                               from hotel in matchingHotels
-                               select new Package(flight, hotel)
-                                    ).ToList().OrderBy(p => p.TotalPrice).ToList().FirstOrDefault();
+                                                   h.ArrivalDate == departureDate.Date && h.Nights == duration)
+                                       .ToList();
 
-            return bestPackage ?? new Package(new Flight(0, "", "", "", decimal.Zero, DateTime.Now), new Hotel(0, "", DateTime.Now, 0, [], 0));
+            var matchingPackages = (from flight in matchingFlights
+                                    from hotel in matchingHotels
+                                    where flight.DepartureDate.Date == hotel.ArrivalDate.Date &&
+                                          hotel.Nights == duration &&
+                                          hotel.LocalAirports.Contains(flight.To)
+                                    select new Package(flight, hotel))
+                                   .OrderBy(p => p.TotalPrice)
+                                   .ToList();
+
+            return matchingPackages;
         }
     }
 }
